@@ -291,7 +291,7 @@ app.get("/products", (req, res) => {
 //adding option to serve queries:
 // client will access a product containing a keyword using:
 // https://localhost:8000?q=keyword
-app.get("/search", (req, res) => {
+app.get("/products?q=keyword", (req, res) => {
   console.log("received query for product category: ", req.query.q);
   const { q } = req.query.q;
   if (q) {
@@ -326,29 +326,52 @@ app.get("/products/:id", (req, res) => {
 // post: to add an item to the database
 app.post("/products", (req, res) => {
   console.log(req.body);
-  const { title } = req.body; // title of the new product will be sent in the body of the post request
-  products = [...products, { id: products.length + 1, title }];
+  const { title, price, description, category } = req.body; // title of the new product will be sent in the body of the post request
+  /*products = [
+    ...products,
+    { id: products.length + 1, title: title, price, description, category },
+  ];*/
+  // the above changes the const array itself. instead use push:
+  products.push({
+    id: products.length + 1,
+    title: title,
+    price,
+    description,
+    category,
+  });
   res.send("OK");
 });
 
 // put : to change a value of an item in the database
 app.put("/products/:id", (req, res) => {
-  const { productId } = req.params; // pass the id of the product you want to change in the params of the put request
+  const { id } = req.params; // pass the id of the product you want to change in the params of the put request
   const { title } = req.body; // pass the new title in the body of the put request
-  const product = products.find((product) => product.id === +productId);
-  product.title = title; // here have changed the title of the product in the database
-  res.send("ok!");
+  console.log("searching for product with id ", id);
+  console.log("params are: ", req.params);
+  const product = products.find((product) => product.id === +id);
+  if (product) {
+    product.title = title; // here have changed the title of the product in the database
+    res.send("ok!");
+  } else {
+    res.status(404).send(`couldn't find product with id ${id}`);
+  }
 });
 
 // delete: to delete an item in the db
-app.delete("products/:id", (req, res) => {
-  const { productId } = req.params;
+app.delete("/products/:id", (req, res) => {
+  console.log("deleting...");
+
+  const { id } = req.params;
+  console.log("received request to delete product with id ", id);
   // use splice, providing index in the array and how many items, to remove items from an array
-  const productIndex = products.findIndex(
-    (product) => product.id === +productId
-  );
-  products.splice(productIndex, 1);
-  res.send("ok!");
+  const productIndex = products.findIndex((product) => product.id === +id);
+  if (productIndex) {
+    console.log("found item at ProductIndex ", productIndex);
+    products.splice(productIndex, 1);
+    res.send("ok!");
+  } else {
+    res.status(404).send(`couldn't find product with id ${id}`);
+  }
 });
 
 const PORT = 8000;
